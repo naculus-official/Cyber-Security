@@ -14,8 +14,8 @@
     </style>
 </head>
 <body>
-    <form id="imageForm">
-        <input type="file" id="imageInput" accept="image/*"><br><br>
+    <form id="imageForm" enctype="multipart/form-data">
+        <input type="file" id="imageInput" name="image" accept="image/*"><br><br>
         <button type="button" id="uploadButton">上傳圖片</button>
     </form>
 
@@ -73,20 +73,21 @@
 
         function uploadImage() {
             const canvas = document.getElementById('canvas');
-            const imageData = canvas.toDataURL('image/png');
+            canvas.toBlob(function(blob) {
+                const formData = new FormData();
+                formData.append('image', blob, 'image.png');
 
-            const xhr = new XMLHttpRequest();
-            xhr.open('POST', './upload.php', true);
-            xhr.setRequestHeader('Content-Type', 'application/json');
+                const xhr = new XMLHttpRequest();
+                xhr.open('POST', 'upload.php', true);
 
-            xhr.onreadystatechange = function() {
-                if(xhr.readyState === 4 && xhr.status === 200) {
-                    alert('圖片上傳成功！');
-                }
-            };
+                xhr.onreadystatechange = function() {
+                    if (xhr.readyState === 4 && xhr.status === 200) {
+                        alert('圖片上傳成功！');
+                    }
+                };
 
-            const data = JSON.stringify({ image: imageData });
-            xhr.send(data);
+                xhr.send(formData);
+            }, 'image/png');
         }
     </script>
 </body>
