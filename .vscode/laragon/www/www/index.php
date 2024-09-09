@@ -1,79 +1,94 @@
-<?php
-  if (!empty($_GET['q'])) {
-    switch ($_GET['q']) {
-      case 'info':
-        phpinfo(); 
-        exit;
-      break;
-    }
-  }
-?>
 <!DOCTYPE html>
-<html>
-    <head>
-        <title>Laragon</title>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>圖片上傳與浮水印</title>
+    <style>
+        #preview {
+            margin-top: 20px;
+            max-width: 100%;
+            max-height: 300px;
+            border: 1px solid #ccc;
+        }
+    </style>
+</head>
+<body>
+    <form id="imageForm" enctype="multipart/form-data">
+        <input type="file" id="imageInput" name="image" accept="image/*"><br><br>
+        <button type="button" id="uploadButton">上傳圖片</button>
+    </form>
 
-        <link href="https://fonts.googleapis.com/css?family=Karla:400" rel="stylesheet" type="text/css">
+    <canvas id="canvas" style="display:none;"></canvas>
+    <img id="preview" alt="圖片預覽">
 
-        <style>
-            html, body {
-                height: 100%;
-            }
+    <script>
+        document.getElementById('imageInput').addEventListener('change', handleImage);
+        document.getElementById('uploadButton').addEventListener('click', uploadImage);
 
-            body {
-                margin: 0;
-                padding: 0;
-                width: 100%;
-                display: table;
-                font-weight: 100;
-                font-family: 'Karla';
-            }
+        function handleImage(e) {
+            const reader = new FileReader();
 
-            .container {
-                text-align: center;
-                display: table-cell;
-                vertical-align: middle;
-            }
+            reader.onload = function(event) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.getElementById('canvas');
+                    const context = canvas.getContext('2d');
 
-            .content {
-                text-align: center;
-                display: inline-block;
-            }
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    context.drawImage(img, 0, 0);
 
-            .title {
-                font-size: 96px;
-            }
+                    // 添加重複浮水印
+                    const text = '浮水印';
+                    const fontSize = 48;
+                    context.font = `${fontSize}px serif`;
+                    context.fillStyle = 'rgba(255, 255, 255, 0.5)';
+                    context.textAlign = 'center';
+                    context.textBaseline = 'middle';
+                    
+                    const textWidth = context.measureText(text).width;
+                    const xIncrement = textWidth + 30; 
+                    const yIncrement = fontSize + 30;
 
-            .opt {
-                margin-top: 30px;
-            }
+                    for (let y = 0; y < canvas.height; y += yIncrement) {
+                        for (let x = 0; x < canvas.width; x += xIncrement) {
+                            context.save();
+                            context.translate(x + textWidth / 2, y + fontSize / 2);
+                            context.rotate(-Math.PI / 4);
+                            context.fillText(text, 0, 0);
+                            context.restore();
+                        }
+                    }
 
-            .opt a {
-              text-decoration: none;
-              font-size: 150%;
-            }
-            
-            a:hover {
-              color: red;
-            }
-        </style>
-    </head>
-    <body>
-        <div class="container">
-            <div class="content">
-                <div class="title" title="Laragon">Laragon</div>
-     
-                <div class="info"><br />
-                      <?php print($_SERVER['SERVER_SOFTWARE']); ?><br />
-                      PHP version: <?php print phpversion(); ?>   <span><a title="phpinfo()" href="/?q=info">info</a></span><br />
-                      Document Root: <?php print ($_SERVER['DOCUMENT_ROOT']); ?><br />
+                    // 顯示預覽
+                    const previewImage = document.getElementById('preview');
+                    previewImage.src = canvas.toDataURL('image/png');
+                };
+                img.src = event.target.result;
+            };
 
-                </div>
-                <div class="opt">
-                  <div><a title="Getting Started" href="https://laragon.org/docs">Getting Started</a></div>
-                </div>
-            </div>
+            reader.readAsDataURL(e.target.files[0]);
+        }
 
-        </div>
-    </body>
+        function uploadImage() {
+            const canvas = document.getElementById('canvas');
+            canvas.toBlob(function(blob) {
+                const formData = new FormData();
+                formData.append('image', blob, 'image.png');
+
+                const xhr = new XMLHttpRequest();
+                xhr.open('POST', 'upload.php', true);
+
+                xhr.onreadystatechange = function() {
+                    if (xhr.readyState === 4 && xhr.status === 200) {
+                        alert('圖片上傳成功！');
+                    }
+                };
+
+                xhr.send(formData);
+            }, 'image/png');
+        }
+    </script>
+</body>
 </html>
