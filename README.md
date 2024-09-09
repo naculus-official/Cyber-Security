@@ -13,6 +13,7 @@ No Secure website and Secure protected website example walkthrough
 - [Git](https://git-scm.com/downloads)
 - [Vscode](https://code.visualstudio.com/download)
 - [vc redist](https://aka.ms/vs/17/release/vc_redist.x64.exe)
+- [wireshark](https://www.wireshark.org/download.html)
 
 # How to run
 - Clone the repository
